@@ -106,15 +106,9 @@ earliestTweetR = mongo.bson.to.list(earliestTweet)$result[[1]]$timestamp
 ###################################################################################
 
 # 4_ mean time delta (mathematics explaining this in the report)
-LateT = mongo.bson.from.list(list(date = as.POSIXct(latestTweetR, tz='UTC')))
-EarlyT = mongo.bson.from.list(list(date = as.POSIXct(earliestTweetR, tz='UTC')))
-
-LateT-EarlyT
-
-
-
-timeDiff=(date = as.POSIXct(latestTweetR, tz='UTC'))-(date = as.POSIXct(earliestTweetR, tz='UTC'))
-timeDiff/((mongo.count(mongo, "manu.tweets"))-1)*24*60*60
+LateT = (date = as.POSIXct(latestTweetR, tz='UTC'))
+EarlyT = (date = as.POSIXct(earliestTweetR, tz='UTC'))
+timeDiff = as.numeric(LateT-EarlyT, units="secs")/((mongo.count(mongo, "manu.tweets"))-1)
 
 
 
@@ -122,9 +116,8 @@ timeDiff/((mongo.count(mongo, "manu.tweets"))-1)*24*60*60
 
 
 
-mongo.count(mongo, TweetData, list(id_members))
 
-###query <- mongo.bson.from.list(list("geolat" = 53.200000))
+
 
 
 
