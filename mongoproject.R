@@ -43,7 +43,7 @@ mongo.find.one(mongo, TweetData)
 # geo_lat : 1 	 53.200000
 # geo_lng : 1 	 -3.200000
 
-
+###################################################################################
 
 # 1_ Get all the different values inside id_members
 if(mongo.is.connected(mongo) == TRUE) {
@@ -51,17 +51,73 @@ if(mongo.is.connected(mongo) == TRUE) {
 }
 # > 119231
 
+###################################################################################
+
+# 2_ Percentage of tweets of the top10 users
+
+
+###################################################################################
+
 # 3_ Latest and earliest tweets
 
-dat1 <- mongo.bson.from.JSON('{"$sort":{"timestamp":-1}}')
-dat2 <- mongo.bson.from.JSON('{"$limit":1}')
-maxDat <- list(dat1, dat2)
-mongo.aggregation(mongo, TweetData, maxDat)
+dat1 = mongo.bson.from.JSON('{"$sort":{"timestamp":-1}}')
+dat2 = mongo.bson.from.JSON('{"$limit":1}')
+maxDat = list(dat1, dat2)
+latestTweet = mongo.aggregation(mongo, TweetData, maxDat)
+# waitedMS : 18 	 0
+# result : 4 	 
+# 0 : 3 	 
+# _id : 7 	 5669b81d3b8eedb1e26beb1c
+# id : 18 	 483731699332022272
+# id_member : 16 	 29227733
+# timestamp : 2 	 2014-06-30 21:59:59
+# text : 2 	 @Teambeatsallday @Drake Just Hold On were going home fts @50cent (rich remix) FREE DL http://t.co/rBeduVDKbB #RT
+# geo_lat : 1 	 53.106812
+# geo_lng : 1 	 -2.439672
+# 
+# 
+# ok : 1 	 1.000000
+latestTweetR = mongo.bson.to.list(latestTweet)$result[[1]]$timestamp
+"2014-06-30 21:59:59"
 
-dat3 <- mongo.bson.from.JSON('{"$sort":{"timestamp":1}}')
-dat4 <- mongo.bson.from.JSON('{"$limit":1}')
-MinDat <- list(dat3, dat4)
-mongo.aggregation(mongo, TweetData, minDat)
+
+dat3 = mongo.bson.from.JSON('{"$sort":{"timestamp":1}}')
+dat4 = mongo.bson.from.JSON('{"$limit":1}')
+minDat = list(dat3, dat4)
+earliestTweet = mongo.aggregation(mongo, TweetData, minDat)
+mongo.distinct(mongo,earliestTweet, "timestamp")
+# waitedMS : 18 	 0
+# result : 4 	 
+# 0 : 3 	 
+# _id : 7 	 5669b8133b8eedb1e26a2bff
+# id : 18 	 480847701492645888
+# id_member : 16 	 495413413
+# timestamp : 2 	 2014-06-22 23:00:00
+# text : 2 	 @NiamhyFoxy happy birthday gorgeous girlie hope you have a great day!ðŸŽ‰ðŸŽŠðŸŽðŸŽˆâœŒï¸ xx
+# geo_lat : 1 	 51.430984
+# geo_lng : 1 	 -2.844654
+# 
+# 
+# ok : 1 	 1.000000
+earliestTweetR = mongo.bson.to.list(earliestTweet)$result[[1]]$timestamp
+"2014-06-22 23:00:00"
+
+
+###################################################################################
+
+# 4_ mean time delta (mathematics explaining this in the report)
+LateT = mongo.bson.from.list(list(date = as.POSIXct(latestTweetR, tz='UTC')))
+EarlyT = mongo.bson.from.list(list(date = as.POSIXct(earliestTweetR, tz='UTC')))
+
+LateT-EarlyT
+
+
+
+timeDiff=(date = as.POSIXct(latestTweetR, tz='UTC'))-(date = as.POSIXct(earliestTweetR, tz='UTC'))
+timeDiff/((mongo.count(mongo, "manu.tweets"))-1)
+
+
+
 
 
 
