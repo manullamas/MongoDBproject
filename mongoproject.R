@@ -35,6 +35,11 @@ mongo.count(mongo, TweetData)
 # > 1459855, it works
 
 mongo.find.one(mongo, TweetData)
+
+
+
+
+
 # _id : 7 	 5669b7cf3b8eedb1e25c8675
 # id : 18 	 481723507731345408
 # id_member : 16 	 235574878
@@ -46,10 +51,12 @@ mongo.find.one(mongo, TweetData)
 ###################################################################################
 
 # 1_ Get all the different values inside id_members
+
 if(mongo.is.connected(mongo) == TRUE) {
   id_members <- mongo.distinct(mongo,TweetData, "id_member")
 }
 # > 119231
+
 
 ###################################################################################
 
@@ -106,11 +113,31 @@ earliestTweetR = mongo.bson.to.list(earliestTweet)$result[[1]]$timestamp
 ###################################################################################
 
 # 4_ mean time delta (mathematics explaining this in the report)
+
 LateT = (date = as.POSIXct(latestTweetR, tz='UTC'))
 EarlyT = (date = as.POSIXct(earliestTweetR, tz='UTC'))
 timeDiff = as.numeric(LateT-EarlyT, units="secs")/((mongo.count(mongo, "manu.tweets"))-1)
 
 
+###################################################################################
+
+# 5_ mean length of a message
+
+# try to make the cursor iterate only through the text column
+sum = 0
+cursor = mongo.find(mongo,TweetData)
+counter = 0
+while (mongo.cursor.next(cursor)) {
+  counter = counter + 1
+  print(counter)
+  # iterate and grab the next record
+  tmp = mongo.bson.to.list(mongo.cursor.value(cursor))
+  sum = sum + str_length(tmp$text)
+}
+print(sum)
+
+avgLength = sum/mongo.count(mongo,TweetData)
+# 72.54083
 
 
 
