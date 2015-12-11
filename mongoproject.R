@@ -114,7 +114,7 @@ LateT-EarlyT
 
 
 timeDiff=(date = as.POSIXct(latestTweetR, tz='UTC'))-(date = as.POSIXct(earliestTweetR, tz='UTC'))
-timeDiff/((mongo.count(mongo, "manu.tweets"))-1)
+timeDiff/((mongo.count(mongo, "manu.tweets"))-1)*24*60*60
 
 
 
