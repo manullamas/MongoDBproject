@@ -1,4 +1,43 @@
-#load rmongo package
+
+tweetsdataset <- read.csv("microblogDataset_COMP6235_CW2.csv")
+summary(tweetsdataset)
+
+########## Data cleaning
+
+# In the id_member seems to be negative values:
+summary(tweetsdataset$id_member)
+hist(tweetsdataset$id_member)
+# To clean this I change directly the sign (plotting a histogram we can see that most of the values are positive)
+tweetsdataset$id_member <- ifelse(tweetsdataset$id_member > 0, tweetsdataset$id_member, tweetsdataset$id_member * -1) 
+# To check that the cleaning was correct whe can check the number of different users before and after the cleaning, that is the same: 119231.
+
+
+
+# In the id column there is many N/A data and when counting the raw data imported in mongo in a preanalysis we can see that the number is less than the length of the dataset, apart from that the number of digits in the id is in general 18, so it is a good point of start to check the ones that are not like that
+idNot18 <- tweetsdataset[(nchar(as.character(tweetsdataset$id)) != 18),]
+# Many of the values are empty (no text), so to remove the bias of these data, we are going to erase them
+
+clean1 <- tweetsdataset[(nchar(as.character(tweetsdataset$id)) == 18),]
+# counting the total number of tweets it is very similar, so these data I have removed seems to be not readed by the system and good thing to remove them
+
+# Using summary again it seems to be ids with characters, it is necessary to delete them
+clean2 <- clean1[grep("[A-z]", tweetsdataset$id, invert=TRUE),]
+
+# seem to be more data that the system is not reading (clean2: 1459894 entries, 1459861 readed entries = 33 not readed and not cleaned yet)
+
+
+
+
+
+
+
+
+
+
+
+
+
+#load rmongo package to work on mongo through R
 library(rmongodb)
 
 #Create mongo
@@ -31,15 +70,8 @@ mongo.count(mongo, "manu.tweets")
 
 # Rename the collection "tweets" that belongs to the database "manu"
 TweetData <- "manu.tweets"
-mongo.count(mongo, TweetData)
-# > 1459855, it works
 
 mongo.find.one(mongo, TweetData)
-
-
-
-
-
 # _id : 7 	 5669b7cf3b8eedb1e25c8675
 # id : 18 	 481723507731345408
 # id_member : 16 	 235574878
@@ -48,19 +80,31 @@ mongo.find.one(mongo, TweetData)
 # geo_lat : 1 	 53.200000
 # geo_lng : 1 	 -3.200000
 
+
 ###################################################################################
 
 # 1_ Get all the different values inside id_members
 
-if(mongo.is.connected(mongo) == TRUE) {
-  id_members <- mongo.distinct(mongo,TweetData, "id_member")
-}
+id_members <- mongo.distinct(mongo,TweetData, "id_member")
+length(id_members)
+
 # > 119231
 
 
 ###################################################################################
 
 # 2_ Percentage of tweets of the top10 users
+
+totalTweets <- mongo.count(mongo, TweetData)
+cond1 <- mongo.bson.from.JSON('{"$group":{"_id":"$id_member", "nTweets":{"$sum":1}}}')
+cond2 <- mongo.bson.from.JSON('{"$sort":{"nTweets":-1}}')
+cond3 <- mongo.bson.from.JSON('{"$limit":10}')
+cond4 <- mongo.bson.from.JSON('{"$group" : { "_id" : null, "top10" : { "$sum": "$nTweets"}}}')
+builtQuery <- mongo.aggregation(mongo, TweetData, list(cond1, cond2, cond3, cond4))
+Rquery <- mongo.bson.to.Robject(builtQuery)
+(Rquery$result$`0`$top10 / totalTweets)*100
+
+#
 
 
 ###################################################################################
@@ -85,7 +129,7 @@ latestTweet = mongo.aggregation(mongo, TweetData, maxDat)
 # 
 # ok : 1 	 1.000000
 latestTweetR = mongo.bson.to.list(latestTweet)$result[[1]]$timestamp
-"2014-06-30 21:59:59"
+# "2014-06-30 21:59:59"
 
 
 dat3 = mongo.bson.from.JSON('{"$sort":{"timestamp":1}}')
@@ -107,7 +151,7 @@ mongo.distinct(mongo,earliestTweet, "timestamp")
 # 
 # ok : 1 	 1.000000
 earliestTweetR = mongo.bson.to.list(earliestTweet)$result[[1]]$timestamp
-"2014-06-22 23:00:00"
+# "2014-06-22 23:00:00"
 
 
 ###################################################################################
@@ -117,13 +161,14 @@ earliestTweetR = mongo.bson.to.list(earliestTweet)$result[[1]]$timestamp
 LateT = (date = as.POSIXct(latestTweetR, tz='UTC'))
 EarlyT = (date = as.POSIXct(earliestTweetR, tz='UTC'))
 timeDiff = as.numeric(LateT-EarlyT, units="secs")/((mongo.count(mongo, "manu.tweets"))-1)
-
+# 0.4710034
 
 ###################################################################################
 
 # 5_ mean length of a message
 
 # try to make the cursor iterate only through the text column
+library(stringr)
 sum = 0
 cursor = mongo.find(mongo,TweetData)
 counter = 0
@@ -135,18 +180,33 @@ while (mongo.cursor.next(cursor)) {
   sum = sum + str_length(tmp$text)
 }
 print(sum)
-
 avgLength = sum/mongo.count(mongo,TweetData)
 # 72.54083
 
 
+###################################################################################
+
+# 6_
+
+
+###################################################################################
+
+# 7_ Average number of hashtags in a message
+# library(ngram)
+# library(stringr)
+# sum = 0
+# cursor = mongo.find(mongo,TweetData)
+# counter = 0
+# while (mongo.cursor.next(cursor)) {
+#   counter = counter + 1
+#   print(counter)
+
+
+###################################################################################
 
 
 
 
 
 
-
-
-
-#mongo.destroy(mongo)
+mongo.destroy(mongo)
