@@ -2,7 +2,7 @@
 tweetsdataset <- read.csv("microblogDataset_COMP6235_CW2.csv")
 summary(tweetsdataset)
 
-########## Data cleaning
+############# Data cleaning
 
 # In the id_member seems to be negative values:
 summary(tweetsdataset$id_member)
@@ -23,19 +23,12 @@ clean1 <- tweetsdataset[(nchar(as.character(tweetsdataset$id)) == 18),]
 # Using summary again it seems to be ids with characters, it is necessary to delete them
 clean2 <- clean1[grep("[A-z]", tweetsdataset$id, invert=TRUE),]
 
-# seem to be more data that the system is not reading (clean2: 1459894 entries, 1459861 readed entries = 33 not readed and not cleaned yet)
+# After this preprocessing we save the dataset again to upload to mongo and start doing some queries
+write.csv(clean2, "tweetsdatasetCleant.csv")
 
 
 
-
-
-
-
-
-
-
-
-
+################ queries
 
 #load rmongo package to work on mongo through R
 library(rmongodb)
